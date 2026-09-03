@@ -207,7 +207,7 @@ int main(int argc, char** argv) {
 
         run_config(kDefH, kDefW, kDefK, kDefSeed, nullptr, /*show=*/true, /*scored=*/true);
         // Reference K=5 table (not graded): tiling and SIMD help more as the kernel grows.
-        run_config(2048, 2048, 5, kDefSeed, nullptr, /*show=*/true, /*scored=*/false);
+        run_config(16384, 16384, 3, kDefSeed, nullptr, /*show=*/true, /*scored=*/false);
         return 0;
     }
 

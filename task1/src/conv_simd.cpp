@@ -36,10 +36,10 @@ void conv_simd(const float* in, float* out, const float* ker,int H, int W, int K
         {
 
             // for 256bits size register, we can process 8 floats at a time
-            __m256 vacc = _mm256_setzero_ps();
+            // __m256 vacc = _mm256_setzero_ps();
 
             // for 128bits size register, we can process 4 floats at a time
-            // __m128 vacc = _mm_setzero_ps();
+            __m128 vacc = _mm_setzero_ps();
 
             for (int ky = 0; ky < K; ++ky) 
             {
@@ -48,31 +48,31 @@ void conv_simd(const float* in, float* out, const float* ker,int H, int W, int K
                 for (int kx = 0; kx < K; ++kx) 
                 {
                     // Load 8 consecutive input pixels for 256 bits register
-                    __m256 vin = _mm256_loadu_ps(in_row + kx);
+                    // __m256 vin = _mm256_loadu_ps(in_row + kx);
 
                     // Load 4 consecutive input pixels for 128bits register
-                    // __m128 vin = _mm_loadu_ps(in_row + kx);
+                    __m128 vin = _mm_loadu_ps(in_row + kx);
 
 
                     // Broadcast one kernel value to all 8 lanes
-                    __m256 vk = _mm256_set1_ps(ker_row[kx]);
+                    // __m256 vk = _mm256_set1_ps(ker_row[kx]);
 
 
                     // Broadcast one kernel value to all 4 lanes
-                    // __m128 vk = _mm_set1_ps(ker_row[kx]);
+                    __m128 vk = _mm_set1_ps(ker_row[kx]);
 
                     // vacc += vin * vk for 256bits register
-                    vacc = _mm256_fmadd_ps(vin, vk, vacc);
+                    // vacc = _mm256_fmadd_ps(vin, vk, vacc);
 
                     // vacc += vin * vk for 128bits register
-                    // vacc = _mm_add_ps(vacc, _mm_mul_ps(vin, vk));
+                    vacc = _mm_add_ps(vacc, _mm_mul_ps(vin, vk));
                 }
             }
             // Store 8 output pixels
-            _mm256_storeu_ps(out + oy * W + ox, vacc);
+            // _mm256_storeu_ps(out + oy * W + ox, vacc);
 
             //  Store 4 output pixels
-            // _mm_storeu_ps(out + oy * W + ox, vacc);
+            _mm_storeu_ps(out + oy * W + ox, vacc);
         }
 
         // Handle remaining pixels when W is not divisible by 8/4
