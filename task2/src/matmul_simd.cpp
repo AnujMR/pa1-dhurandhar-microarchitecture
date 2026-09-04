@@ -5,7 +5,6 @@
 
 void matmul_simd(const float* A, const float* B, float* C,int M, int N, int K, int lda, int ldb, int ldc) 
 {
-    // SIMD: calculate 4/8 output elements simultaneously
     for (int i = 0; i < M; ++i)
     {
         int j = 0;
@@ -21,6 +20,7 @@ void matmul_simd(const float* A, const float* B, float* C,int M, int N, int K, i
 
             for (int k = 0; k < K; ++k)
             {
+                
                 // Load 8 B values for 256 bits register
                 // __m256 vb = _mm256_set_ps(
                 //     B[(j + 7) * ldb + k],
@@ -32,6 +32,8 @@ void matmul_simd(const float* A, const float* B, float* C,int M, int N, int K, i
                 //     B[(j + 1) * ldb + k],
                 //     B[j * ldb + k]
                 // );
+
+
                 // Load 4 B values for 128 bits register
                 __m128 vb = _mm_set_ps(
                     B[static_cast<long>(j + 3) * ldb + k],
