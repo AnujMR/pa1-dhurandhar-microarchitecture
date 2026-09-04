@@ -1,41 +1,54 @@
 // conv_tile.cpp  STAGE 3: CACHE TILING
 
 #include "convolution.h"
+#include <algorithm>
+#include <cstdlib>
 
-// void conv_tile(const float* in, float* out, const float* ker,
-//                int H, int W, int K) {
-//     // TODO(student): replace this placeholder with your tiled/blocked implementation.
-//     conv_naive(in, out, ker, H, W, K);
-// }
+namespace
+{
 
-#define TILE_SIZE 25
+    int get_tile_size(int fallback)
+    {
+        if (const char *env = std::getenv("TILE"))
+        {
+            const int v = std::atoi(env);
+            if (v > 0)
+                return v;
+        }
+        return fallback;
+    }
+
+}
 
 void conv_tile(const float *in, float *out, const float *ker,
                int H, int W, int K)
 {
-
     const int p = K / 2;
     const int in_stride = W + 2 * p;
 
-    for (int ty = 0; ty < H; ty += TILE_SIZE)
+    static const int TILE = get_tile_size(64); // default tile size
+
+    for (int ty = 0; ty < H; ty += TILE)
     {
-        for (int tx = 0; tx < W; tx += TILE_SIZE)
+        const int y_end = std::min(ty + TILE, H);
+        for (int tx = 0; tx < W; tx += TILE)
         {
-            for (int oy = ty; oy < ty + TILE_SIZE && oy < H; ++oy)
+            const int x_end = std::min(tx + TILE, W);
+
+            for (int oy = ty; oy < y_end; ++oy)
             {
-                for (int ox = tx; ox < tx + TILE_SIZE && ox < W; ++ox)
+                for (int ox = tx; ox < x_end; ++ox)
                 {
-
                     float acc = 0.0f;
-
                     for (int ky = 0; ky < K; ++ky)
                     {
+                        const float *in_row = in + (oy + ky) * in_stride + ox;
+                        const float *ker_row = ker + ky * K;
                         for (int kx = 0; kx < K; ++kx)
                         {
-                            acc += in[(oy + ky) * in_stride + (ox + kx)] * ker[ky * K + kx];
+                            acc += in_row[kx] * ker_row[kx];
                         }
                     }
-
                     out[oy * W + ox] = acc;
                 }
             }
