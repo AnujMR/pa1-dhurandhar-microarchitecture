@@ -27,13 +27,5 @@ void conv_naive(const float* in, float* out, const float* ker,
             out[oy * W + ox + 2] = acc2;
             out[oy * W + ox + 3] = acc3;
         }
-        // Remainder (W not divisible by 4)
-        for (; ox < W; ++ox) {
-            float acc = 0.0f;
-            for (int ky = 0; ky < K; ++ky)
-                for (int kx = 0; kx < K; ++kx)
-                    acc += in[(oy + ky) * in_stride + (ox + kx)] * ker[ky * K + kx];
-            out[oy * W + ox] = acc;
-        }
     }
 }
