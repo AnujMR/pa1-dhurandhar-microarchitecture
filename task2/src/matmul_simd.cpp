@@ -3,70 +3,94 @@
 #include <immintrin.h>
 #include "matmul.h"
 
-void matmul_simd(const float* A, const float* B, float* C,int M, int N, int K, int lda, int ldb, int ldc) 
-{
-    for (int i = 0; i < M; ++i)
-    {
-        for (int j = 0; j < N; ++j)
-        {
-            // for 256bits size register, we can process 8 floats at a time
-            __m256 vacc = _mm256_setzero_ps();
+void matmul_simd(const float* A, const float* B, float* C,
+                 int M, int N, int K, int lda, int ldb, int ldc) {
+    // TODO(student): replace this placeholder with your register-tiled AVX2 implementation.
 
-            // for 128bits size register, we can process 4 floats at a time
-            // __m128 vacc = _mm_setzero_ps();
+    for (int i = 0; i < M; i += 4) {
 
-            const float* a = A + static_cast<long>(i) * lda;
+        int rows = (M - i >= 4) ? 4 : (M - i);
+
+        for (int j = 0; j < N; ++j) {
+
             const float* b = B + static_cast<long>(j) * ldb;
 
-            int k = 0;
+            __m256 acc0 = _mm256_setzero_ps();
+            __m256 acc1 = _mm256_setzero_ps();
+            __m256 acc2 = _mm256_setzero_ps();
+            __m256 acc3 = _mm256_setzero_ps();
 
-            for (; k + 7 < K; k += 8)
-            {
-                
-                // Load 8 B values for 256 bits register
-                __m256 vb = _mm256_loadu_ps(b + k);
+            int p = 0;
 
-                // Load 4 B values for 128 bits register
-                // __m128 vb = _mm_loadu_ps(b + k);
+            // SIMD LOOP
+            for (; p + 7 < K; p += 8) {
 
-                // Load 8 A values for 256 bits register
-                __m256 va = _mm256_loadu_ps(a + k);
+                __m256 bv = _mm256_loadu_ps(b + p);
 
-                // Load 4 A values for 128 bits register
-                // __m128 va = _mm_loadu_ps(a + k);
+                if (rows >= 1) {
+                    __m256 av0 = _mm256_loadu_ps(A + static_cast<long>(i) * lda + p);
+                    acc0 = _mm256_fmadd_ps(av0, bv, acc0);
+                }
 
-                // vacc += va * vb for 256bits register
-                vacc = _mm256_fmadd_ps(va, vb, vacc);
+                if (rows >= 2) {
+                    __m256 av1 = _mm256_loadu_ps(A + static_cast<long>(i + 1) * lda + p);
+                    acc1 = _mm256_fmadd_ps(av1, bv, acc1);
+                }
 
-                // vacc += va * vb for 128bits register
-                // vacc = _mm_fmadd_ps(va, vb, vacc);
+                if (rows >= 3) {
+                    __m256 av2 = _mm256_loadu_ps(A + static_cast<long>(i + 2) * lda + p);
+                    acc2 = _mm256_fmadd_ps(av2, bv, acc2);
+                }
+
+                if (rows >= 4) {
+                    __m256 av3 = _mm256_loadu_ps(A + static_cast<long>(i + 3) * lda + p);
+                    acc3 = _mm256_fmadd_ps(av3, bv, acc3);
+                }
             }
 
-            // for 256bits register, we can process 8 floats at a time
-            __m256 temp = _mm256_hadd_ps(vacc, vacc);
-            temp = _mm256_hadd_ps(temp, temp);
+            // horizontal reduction
+            auto hsum256 = [](__m256 v) -> float {
+                __m128 lo = _mm256_castps256_ps128(v);
+                __m128 hi = _mm256_extractf128_ps(v, 1);
 
-            __m128 low = _mm256_castps256_ps128(temp);
-            __m128 high = _mm256_extractf128_ps(temp, 1);
+                __m128 sum = _mm_add_ps(lo, hi);
 
-            __m128 sum = _mm_add_ps(low, high);
+                sum = _mm_hadd_ps(sum, sum);
+                sum = _mm_hadd_ps(sum, sum);
 
-            float acc = _mm_cvtss_f32(sum);
+                return _mm_cvtss_f32(sum);
+            };
 
-            // for 128bits register, we can process 4 floats at a time
-            // __m128 temp = _mm_hadd_ps(vacc, vacc);
-            // temp = _mm_hadd_ps(temp, temp);
+            float result0 = hsum256(acc0);
+            float result1 = hsum256(acc1);
+            float result2 = hsum256(acc2);
+            float result3 = hsum256(acc3);
 
-            // float acc = _mm_cvtss_f32(temp);
+            for (; p < K; ++p) {
 
+                result0 += A[static_cast<long>(i) * lda + p] * b[p];
 
-            // Handle remaining elements when K is not divisible by 8/4
-            for (; k < K; ++k)
-            {
-                acc += a[k] * b[k];
+                if (rows >= 2)
+                    result1 += A[static_cast<long>(i + 1) * lda + p] * b[p];
+
+                if (rows >= 3)
+                    result2 += A[static_cast<long>(i + 2) * lda + p] * b[p];
+
+                if (rows >= 4)
+                    result3 += A[static_cast<long>(i + 3) * lda + p] * b[p];
             }
 
-            C[static_cast<long>(i) * ldc + j] = acc;
+            C[static_cast<long>(i) * ldc + j] = result0;
+
+            if (rows >= 2)
+                C[static_cast<long>(i + 1) * ldc + j] = result1;
+
+            if (rows >= 3)
+                C[static_cast<long>(i + 2) * ldc + j] = result2;
+
+            if (rows >= 4)
+                C[static_cast<long>(i + 3) * ldc + j] = result3;
         }
     }
+    //matmul_naive(A, B, C, M, N, K, lda, ldb, ldc);
 }
