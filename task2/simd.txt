@@ -1,0 +1,13 @@
+
+
+=== Workload  M=1024 N=1024 K=1024 seed=1234 (not graded) ===
+stage           correct    time(ms)     GFLOP/s    speedup
+--------------------------------------------------------------
+naive (ref)     yes        1696.266        1.27      1.00x
+simd            yes         113.875       18.86     14.90x
+
+=== Workload  M=1024 N=1024 K=1024 seed=1234 (not graded) ===
+stage           correct    time(ms)     GFLOP/s    speedup
+--------------------------------------------------------------
+naive (ref)     yes         961.684        2.23      1.00x
+simd            yes          35.578       60.36     27.03x

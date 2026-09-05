@@ -1,0 +1,28 @@
+Original CPU 0 MSR 0x1A4 = 0
+
+========================================
+HARDWARE PREFETCHERS: ON
+========================================
+MSR value: 0
+CS683 PA-1 Task 2  matrix multiplication optimization harness
+
+=== Workload  M=1024 N=1024 K=1024 seed=1234 (not graded) ===
+stage           correct    time(ms)     GFLOP/s    speedup
+--------------------------------------------------------------
+naive (ref)     yes         974.395        2.20      1.00x
+prefetch        yes          68.290       31.45     14.27x
+
+========================================
+HARDWARE PREFETCHERS: OFF
+========================================
+MSR value: f
+CS683 PA-1 Task 2  matrix multiplication optimization harness
+
+=== Workload  M=1024 N=1024 K=1024 seed=1234 (not graded) ===
+stage           correct    time(ms)     GFLOP/s    speedup
+--------------------------------------------------------------
+naive (ref)     yes         999.768        2.15      1.00x
+prefetch        yes          70.805       30.33     14.12x
+
+Experiment finished.
+Original MSR value was: 0
