@@ -1,0 +1,48 @@
+========================================
+PREFETCH LEVEL: T0
+BLOCK: 64 x 32 x 64 | DISTANCE: 16
+========================================
+CS683 PA-1 Task 2  matrix multiplication optimization harness
+
+=== Workload  M=1024 N=1024 K=1024 seed=1234 (not graded) ===
+stage           correct    time(ms)     GFLOP/s    speedup
+--------------------------------------------------------------
+naive (ref)     yes        1029.689        2.09      1.00x
+prefetch        yes          86.792       24.74     11.86x
+
+========================================
+PREFETCH LEVEL: T1
+BLOCK: 64 x 32 x 64 | DISTANCE: 16
+========================================
+CS683 PA-1 Task 2  matrix multiplication optimization harness
+
+=== Workload  M=1024 N=1024 K=1024 seed=1234 (not graded) ===
+stage           correct    time(ms)     GFLOP/s    speedup
+--------------------------------------------------------------
+naive (ref)     yes        1644.673        1.31      1.00x
+prefetch        yes         114.328       18.78     14.39x
+
+========================================
+PREFETCH LEVEL: T2
+BLOCK: 64 x 32 x 64 | DISTANCE: 16
+========================================
+CS683 PA-1 Task 2  matrix multiplication optimization harness
+
+=== Workload  M=1024 N=1024 K=1024 seed=1234 (not graded) ===
+stage           correct    time(ms)     GFLOP/s    speedup
+--------------------------------------------------------------
+naive (ref)     yes        1632.230        1.32      1.00x
+prefetch        yes          68.691       31.26     23.76x
+
+========================================
+PREFETCH LEVEL: NTA
+BLOCK: 64 x 32 x 64 | DISTANCE: 16
+========================================
+CS683 PA-1 Task 2  matrix multiplication optimization harness
+
+=== Workload  M=1024 N=1024 K=1024 seed=1234 (not graded) ===
+stage           correct    time(ms)     GFLOP/s    speedup
+--------------------------------------------------------------
+naive (ref)     yes        1215.933        1.77      1.00x
+prefetch        yes          73.470       29.23     16.55x
+
