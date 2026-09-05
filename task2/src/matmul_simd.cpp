@@ -7,69 +7,65 @@ void matmul_simd(const float* A, const float* B, float* C,int M, int N, int K, i
 {
     for (int i = 0; i < M; ++i)
     {
-        int j = 0;
-
-        // for 256bits keep j+=8 and for 128bits keep j+=4
-        for (; j + 3 < N; j += 4)
+        for (int j = 0; j < N; ++j)
         {
             // for 256bits size register, we can process 8 floats at a time
-            // __m256 vacc = _mm256_setzero_ps();
+            __m256 vacc = _mm256_setzero_ps();
 
             // for 128bits size register, we can process 4 floats at a time
-            __m128 vacc = _mm_setzero_ps();
+            // __m128 vacc = _mm_setzero_ps();
 
-            for (int k = 0; k < K; ++k)
+            const float* a = A + static_cast<long>(i) * lda;
+            const float* b = B + static_cast<long>(j) * ldb;
+
+            int k = 0;
+
+            for (; k + 7 < K; k += 8)
             {
                 
                 // Load 8 B values for 256 bits register
-                // __m256 vb = _mm256_set_ps(
-                //     B[(j + 7) * ldb + k],
-                //     B[(j + 6) * ldb + k],
-                //     B[(j + 5) * ldb + k],
-                //     B[(j + 4) * ldb + k],
-                //     B[(j + 3) * ldb + k],
-                //     B[(j + 2) * ldb + k],
-                //     B[(j + 1) * ldb + k],
-                //     B[j * ldb + k]
-                // );
-
+                __m256 vb = _mm256_loadu_ps(b + k);
 
                 // Load 4 B values for 128 bits register
-                __m128 vb = _mm_set_ps(
-                    B[static_cast<long>(j + 3) * ldb + k],
-                    B[static_cast<long>(j + 2) * ldb + k],
-                    B[static_cast<long>(j + 1) * ldb + k],
-                    B[static_cast<long>(j) * ldb + k]
-                );
+                // __m128 vb = _mm_loadu_ps(b + k);
 
-                // Broadcast one A value to all 8 lanes
-                // __m256 va = _mm256_set1_ps(A[i * lda + k]);
+                // Load 8 A values for 256 bits register
+                __m256 va = _mm256_loadu_ps(a + k);
 
-                // Broadcast one A value to all 4 lanes
-                __m128 va = _mm_set1_ps(A[static_cast<long>(i) * lda + k]);
+                // Load 4 A values for 128 bits register
+                // __m128 va = _mm_loadu_ps(a + k);
 
                 // vacc += va * vb for 256bits register
-                // vacc = _mm256_fmadd_ps(va, vb, vacc);
+                vacc = _mm256_fmadd_ps(va, vb, vacc);
 
                 // vacc += va * vb for 128bits register
-                vacc = _mm_add_ps(vacc, _mm_mul_ps(va, vb));
+                // vacc = _mm_fmadd_ps(va, vb, vacc);
             }
 
-            // Store 8 output elements
-            // _mm256_storeu_ps(C + i * ldc + j, vacc);
+            // for 256bits register, we can process 8 floats at a time
+            __m256 temp = _mm256_hadd_ps(vacc, vacc);
+            temp = _mm256_hadd_ps(temp, temp);
 
-            // Store 4 output elements
-            _mm_storeu_ps(C + static_cast<long>(i) * ldc + j, vacc);
-        }
+            __m128 low = _mm256_castps256_ps128(temp);
+            __m128 high = _mm256_extractf128_ps(temp, 1);
 
-        // Handle remaining columns when N is not divisible by 8/4
-        for (; j < N; ++j)
-        {
-            float acc = 0.0f;
-            for (int k = 0; k < K; ++k)
+            __m128 sum = _mm_add_ps(low, high);
+
+            float acc = _mm_cvtss_f32(sum);
+
+            // for 128bits register, we can process 4 floats at a time
+            // __m128 temp = _mm_hadd_ps(vacc, vacc);
+            // temp = _mm_hadd_ps(temp, temp);
+
+            // float acc = _mm_cvtss_f32(temp);
+
+
+            // Handle remaining elements when K is not divisible by 8/4
+            for (; k < K; ++k)
             {
-                acc += A[static_cast<long>(i) * lda + k] * B[static_cast<long>(j) * ldb + k];
+                acc += a[k] * b[k];
             }
+
             C[static_cast<long>(i) * ldc + j] = acc;
         }
     }
